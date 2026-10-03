@@ -7,14 +7,27 @@ const queue = [];
 const MAX = 500;
 
 app.post("/events", (req, res) => {
-  console.log("🔥 SINAL RECEBIDO DO TIKFINITY:", JSON.stringify(req.body));
-  const ev = req.body && (req.body.event || req.body);
-  if (ev) queue.push(ev);
+  // Pega o nick limpo enviado na URL (?nick={value})
+  const nick = req.query.nick || (req.body && req.body.nick);
+  
+  console.log("🔥 SINAL RECEBIDO:", { nick });
+  
+  if (nick) {
+    // Envia o nick exato para a fila do Roblox
+    queue.push({ nick: nick });
+  } else {
+    const ev = req.body && (req.body.event || req.body);
+    if (ev) queue.push(ev);
+  }
+  
   if (queue.length > MAX) queue.splice(0, queue.length - MAX);
   res.status(200).json({ ok: true });
 });
 
 app.get("/events", (req, res) => {
+  if (req.query.nick) {
+    queue.push({ nick: req.query.nick });
+  }
   const batch = queue.splice(0, queue.length);
   res.json({ events: batch });
 });
